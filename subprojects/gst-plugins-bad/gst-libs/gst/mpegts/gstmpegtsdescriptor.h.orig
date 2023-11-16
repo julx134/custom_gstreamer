@@ -4,7 +4,6 @@
  *
  * Authors:
  *   Edward Hervey <edward@collabora.com>
- *   Michael Fien <mfien@harris.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -299,17 +298,6 @@ gboolean  gst_mpegts_descriptor_parse_ca (GstMpegtsDescriptor *descriptor,
 					  guint16 *ca_pid,
 					  const guint8 **private_data,
 					  gsize *private_data_size);
-
-/* GST_MTS_DESC_METADATA (0x26) */
-GST_EXPORT
-GstMpegtsDescriptor *
-gst_mpegts_descriptor_from_metadata (guint application_format, guint format);
-
-/* GST_MTS_DESC_METADATA_STD (0x27) */
-GST_EXPORT
-GstMpegtsDescriptor *
-gst_mpegts_descriptor_from_metadata_std ( guint input_leak_rate,
-        guint buffer_size, guint output_leak_rate);
 
 /* GST_MTS_DESC_ISO_639_LANGUAGE (0x0A) */
 /**
