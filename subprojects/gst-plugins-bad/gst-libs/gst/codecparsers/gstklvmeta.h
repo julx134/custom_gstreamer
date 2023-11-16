@@ -21,14 +21,19 @@
 #define __GST_KLV_META_H__
 
 #include <gst/gst.h>
+#include <gst/codecparsers/codecparsers-prelude.h>
 
 G_BEGIN_DECLS
 
 typedef struct _GstKlvMeta GstKlvMeta;
 
+GST_CODEC_PARSERS_API
 GType gst_klv_meta_api_get_type (void);
+
 #define GST_KLV_META_API_TYPE  (gst_klv_meta_api_get_type())
 #define GST_KLV_META_INFO  (gst_klv_meta_get_info())
+
+GST_CODEC_PARSERS_API
 const GstMetaInfo * gst_klv_meta_get_info (void);
 
 /**
@@ -61,12 +66,12 @@ struct _GstKlvMeta {
 
 #define gst_buffer_get_klv_meta(b) ((GstKlvMeta*)gst_buffer_get_meta((b),GST_KLV_META_API_TYPE))
 
-GstKlvMeta *
-gst_buffer_add_klv_meta (GstBuffer * buffer,
-                                const guint8 metadata_service_id,
-                                const guint8 sequence_number,
-                                const guint8 flags,
-                                const guint16 au_cell_data_length);
+GST_CODEC_PARSERS_API
+GstKlvMeta * gst_buffer_add_klv_meta (GstBuffer * buffer,
+                                      const guint8 metadata_service_id,
+                                      const guint8 sequence_number,
+                                      const guint8 flags,
+                                      const guint16 au_cell_data_length);
 
 G_END_DECLS
 
