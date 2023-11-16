@@ -79,6 +79,7 @@
 #include <gst/videoparsers/gstjpeg2000parse.h>
 #include <gst/video/video-color.h>
 #include <gst/base/base.h>
+#include <gst/codecparsers/gstklvmeta.h>
 
 #include "gstbasetsmux.h"
 #include "gstbasetsmuxaac.h"
@@ -673,7 +674,13 @@ gst_base_ts_mux_create_or_update_stream (GstBaseTsMux * mux,
     st = TSMUX_ST_PS_OPUS;
     ts_pad->prepare_func = gst_base_ts_mux_prepare_opus;
   } else if (strcmp (mt, "meta/x-klv") == 0) {
+    gint stream_type;
     st = TSMUX_ST_PS_KLV;
+    
+    if (gst_structure_get_int (s, "stream_type", &stream_type)) {
+    	if (stream_type == TSMUX_ST_METADATA)
+    		st = TSMUX_ST_METADATA
+    }
   } else if (strcmp (mt, "image/x-jpc") == 0) {
     /*
      * See this document for more details on standard:
@@ -825,6 +832,14 @@ gst_base_ts_mux_create_or_update_stream (GstBaseTsMux * mux,
   /* Width and Height */
   gst_structure_get_int (s, "width", &ts_pad->stream->horizontal_size);
   gst_structure_get_int (s, "height", &ts_pad->stream->vertical_size);
+      gst_structure_get_int (s, "application_format",
+        &ts_data->stream->application_format);
+   gst_structure_get_int (s, "format", &ts_data->stream->format);
+    gst_structure_get_int (s, "input_leak_rate",
+        &ts_data->stream->input_leak_rate);
+    gst_structure_get_int (s, "buffer_size", &ts_data->stream->buffer_size);
+    gst_structure_get_int (s, "output_leak_rate",
+        &ts_data->stream->output_leak_rate);
 
   ts_pad->stream->color_spec = color_spec;
   ts_pad->stream->max_bitrate = max_rate;
@@ -1439,6 +1454,31 @@ gst_base_ts_mux_aggregate_buffer (GstBaseTsMux * mux,
   }
 
   GST_DEBUG_OBJECT (mux, "delta: %d", delta);
+
+  /* Get AU header metadata from buffer and add it to the head of buffer data */
+  if (best->stream->stream_type == TSMUX_ST_METADATA) {
+    GstKlvMeta *meta = gst_buffer_get_klv_meta (buf);
+    GstMemory *mem;
+    GstMapInfo map;
+
+    if (meta) {
+      GST_DEBUG ("KLV Data Mux %i %i %i %i", meta->metadata_service_id,
+          meta->sequence_number, meta->flags, meta->au_cell_data_length);
+
+      mem = gst_allocator_alloc (NULL, 5, NULL);
+      if (gst_memory_map (mem, &map, GST_MAP_WRITE)) {
+        map.data[0] = meta->metadata_service_id;
+        map.data[1] = meta->sequence_number;
+        map.data[2] = meta->flags;
+        map.data[3] = (meta->au_cell_data_length & 0xff00) >> 8;
+        map.data[4] = (meta->au_cell_data_length & 0xff);
+
+        gst_memory_unmap (mem, &map);
+        buf = gst_buffer_make_writable (buf);
+        gst_buffer_prepend_memory (buf, mem);
+      }
+    }
+  }
 
   if (gst_buffer_get_size (buf) > 0) {
     stream_data = stream_data_new (buf);

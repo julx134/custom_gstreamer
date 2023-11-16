@@ -672,7 +672,7 @@ tsmux_program_set_pcr_stream (TsMuxProgram * program, TsMuxStream * stream)
 {
   g_return_if_fail (program != NULL);
 
-  if (program->pcr_stream == stream)
+  if (program->pcr_stream == stream || stream->is_meta == TRUE)
     return;
 
   if (program->pcr_stream != NULL)
@@ -757,6 +757,11 @@ tsmux_create_stream (TsMux * mux, guint stream_type, guint stream_number,
   stream->max_bitrate = max_bitrate;
   /* ignored if it's not audio */
   stream->audio_bitrate = bitrate;
+   stream->application_format = 256;
+  stream->format = 255;
+  stream->input_leak_rate = 0;
+  stream->buffer_size = 0;
++ stream->output_leak_rate = 0;
 
   return stream;
 }
